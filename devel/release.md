@@ -28,7 +28,7 @@ export PATCH_VERSION=y  # The latest patch version for the minor version. Not re
 ```
 To create a snapshot:
 ```
-$ KUBERNETES_BRANCH=release-1.${MINOR_VERSION} CLIENT_VERSION=${MINOR_VERSION}.0.0-snapshot DEVELOPMENT_STATUS="3 - Alpha" scripts/release.sh
+$ KUBERNETES_BRANCH=release-1.${MINOR_VERSION} CLIENT_VERSION=${MINOR_VERSION}.0.0+snapshot DEVELOPMENT_STATUS="3 - Alpha" scripts/release.sh
 ```
 To create an a1 release:
 ```
@@ -256,7 +256,7 @@ the target branch to "release-x.y". If the release is a pre-release, check the
 
 ## Announcement
 
-Send an announcement email to kubernetes-dev@googlegroups.com with the subject: [ANNOUNCE] kubernetes python-client $VERSION is released
+Send an announcement email to dev@kubernetes.io with the subject: [ANNOUNCE] kubernetes python-client $VERSION is released
 
 ## Cleanup
 

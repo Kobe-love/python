@@ -1,9 +1,10 @@
 # V1VolumeProjection
 
-Projection that may be projected along with other supported volume types
+Projection that may be projected along with other supported volume types. Exactly one of these fields must be set.
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**cluster_trust_bundle** | [**V1ClusterTrustBundleProjection**](V1ClusterTrustBundleProjection.md) |  | [optional] 
 **config_map** | [**V1ConfigMapProjection**](V1ConfigMapProjection.md) |  | [optional] 
 **downward_api** | [**V1DownwardAPIProjection**](V1DownwardAPIProjection.md) |  | [optional] 
 **secret** | [**V1SecretProjection**](V1SecretProjection.md) |  | [optional] 

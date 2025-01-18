@@ -52,20 +52,33 @@ def _find_return_type(func):
 
 
 def iter_resp_lines(resp):
-    prev = ""
-    for seg in resp.stream(amt=None, decode_content=False):
-        if isinstance(seg, bytes):
-            seg = seg.decode('utf8')
-        seg = prev + seg
-        lines = seg.split("\n")
-        if not seg.endswith("\n"):
-            prev = lines[-1]
-            lines = lines[:-1]
+    buffer = bytearray()
+    for segment in resp.stream(amt=None, decode_content=False):
+
+        # Append the segment (chunk) to the buffer
+        #
+        # Performance note: depending on contents of buffer and the type+value of segment,
+        # encoding segment into the buffer could be a wasteful step. The approach used here
+        # simplifies the logic farther down, but in the future it may be reasonable to
+        # sacrifice readability for performance.
+        if isinstance(segment, bytes):
+            buffer.extend(segment)
+        elif isinstance(segment, str):
+            buffer.extend(segment.encode("utf-8"))
         else:
-            prev = ""
-        for line in lines:
+            raise TypeError(
+                f"Received invalid segment type, {type(segment)}, from stream. Accepts only 'str' or 'bytes'.")
+
+        # Split by newline (safe for utf-8 because multi-byte sequences cannot contain the newline byte)
+        next_newline = buffer.find(b'\n')
+        while next_newline != -1:
+            # Convert bytes to a valid utf-8 string, replacing any invalid utf-8 with the '�' character
+            line = buffer[:next_newline].decode(
+                "utf-8", errors="replace")
+            buffer = buffer[next_newline+1:]
             if line:
                 yield line
+            next_newline = buffer.find(b'\n')
 
 
 class Watch(object):
@@ -139,8 +152,8 @@ class Watch(object):
             v1 = kubernetes.client.CoreV1Api()
             watch = kubernetes.watch.Watch()
             for e in watch.stream(v1.list_namespace, resource_version=1127):
-                type = e['type']
-                object = e['object']  # object is one of type return_type
+                type_ = e['type']
+                object_ = e['object']  # object is one of type return_type
                 raw_object = e['raw_object']  # raw_object is a dict
                 ...
                 if should_stop:

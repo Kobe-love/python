@@ -50,12 +50,15 @@ There are two inputs available in the client, that could be used to set connecti
 - The value of the argument `_request_timeout`, **n** (which is time duration in seconds) is set to the socket used for the connection.
 
 - In case, if the `_request_timeout` value is set, this argument can accept 2 types of input values ~
-    - float, 
+    - int/long
     - a tuple (with a length of 2)
     
   ***Refer***
   - *[https://github.com/kubernetes-client/python/blob/v17.17.0/kubernetes/client/api_client.py#L336-L339](https://github.com/kubernetes-client/python/blob/v17.17.0/kubernetes/client/api_client.py#L336-L339)*
 
+  ***Example***
+  - *[request_timeout.py](../dynamic-client/request_timeout.py)*
+ 
 - In case of network outage, leading to dropping all packets with no RST/FIN, the timeout value (in seconds) determined by the `request_timeout` argument, would be the time duration for how long the client will wait before dropping the connection.
 
 - When the timeout happens, an exception will be raised, for eg. ~

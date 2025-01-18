@@ -16,7 +16,7 @@ from setuptools import setup
 
 # Do not edit these constants. They will be updated automatically
 # by scripts/update-client.sh.
-CLIENT_VERSION = "22.0.0-snapshot"
+CLIENT_VERSION = "32.0.0+snapshot"
 PACKAGE_NAME = "kubernetes"
 DEVELOPMENT_STATUS = "3 - Alpha"
 
@@ -35,7 +35,9 @@ with open('requirements.txt') as f:
     for line in f:
         line, _, _ = line.partition('#')
         line = line.strip()
-        if ';' in line:
+        if not line or line.startswith('setuptools'):
+            continue
+        elif ';' in line:
             requirement, _, specifier = line.partition(';')
             for_specifier = EXTRAS.setdefault(':{}'.format(specifier), [])
             for_specifier.append(requirement)
@@ -80,5 +82,6 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
 )

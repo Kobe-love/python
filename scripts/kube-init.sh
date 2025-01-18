@@ -54,7 +54,7 @@ docker --version
 # installs per default
 # See:
 # https://github.com/kubernetes/minikube/blob/master/pkg/minikube/constants/constants.go
-K8S_VERSION=$(curl -sS https://storage.googleapis.com/kubernetes-release/release/stable.txt)
+K8S_VERSION=$(curl -sS https://dl.k8s.io/release/stable.txt)
 echo "K8S_VERSION : ${K8S_VERSION}"
 
 # You can pass variables to minikube using MINIKUBE_ARGS
@@ -71,7 +71,7 @@ echo "Checking docker service"
 sudo docker ps
 
 echo "Download Kubernetes CLI"
-wget -q -O kubectl "http://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl"
+wget -q -O kubectl "http://dl.k8s.io/release/${K8S_VERSION}/bin/linux/amd64/kubectl"
 sudo chmod +x kubectl
 sudo mv kubectl /usr/local/bin/
 

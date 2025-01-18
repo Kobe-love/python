@@ -15,7 +15,6 @@
 import time
 import unittest
 import uuid
-import json
 
 from kubernetes.e2e_test import base
 from kubernetes.client import api_client
@@ -469,6 +468,11 @@ class TestDynamicClient(unittest.TestCase):
             name=name, namespace='default', label_selector="e2e-test=true")
         self.assertEqual(name, resp.metadata.name)
 
+        count = 0
+        for _ in client.watch(api, timeout=10, namespace="default", name=name):
+            count += 1
+        self.assertTrue(count > 0, msg="no events received for watch")
+
         test_configmap['data']['config.json'] = "{}"
         resp = api.patch(
             name=name, namespace='default', body=test_configmap)
@@ -527,9 +531,8 @@ class TestDynamicClient(unittest.TestCase):
                             'ports': [{'containerPort': 80,
                                             'protocol': 'TCP'}]}]}}
 
-        body = json.dumps(pod_manifest).encode()
         resp = api.server_side_apply(
-            name=name, namespace='default', body=body,
+            namespace='default', body=pod_manifest,
             field_manager='kubernetes-unittests', dry_run="All")
         self.assertEqual('kubernetes-unittests', resp.metadata.managedFields[0].manager)
 
@@ -558,6 +561,11 @@ class TestDynamicClientSerialization(unittest.TestCase):
         """`ResourceField` is a special type which overwrites `__getattr__` method to return `None`
         when a non-existent attribute was accessed. which means it can pass any `hasattr(...)` tests.
         """
-        res = ResourceField(foo='bar')
-        # method will return original object when it doesn't know how to proceed
-        self.assertEqual(self.client.serialize_body(res), res)
+        params = {
+            "foo": "bar",
+            "self": True
+        }
+        res = ResourceField(params=params)
+        self.assertEqual(res["foo"], params["foo"])
+        self.assertEqual(res["self"], params["self"])
+        self.assertEqual(self.client.serialize_body(res), params)

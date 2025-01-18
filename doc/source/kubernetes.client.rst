@@ -5,42 +5,26 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
-    kubernetes.client.apis
-    kubernetes.client.models
+   kubernetes.client.api
+   kubernetes.client.models
 
 Submodules
 ----------
 
-kubernetes.client.api_client module
------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: kubernetes.client.api_client
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-kubernetes.client.configuration module
---------------------------------------
-
-.. automodule:: kubernetes.client.configuration
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-kubernetes.client.rest module
------------------------------
-
-.. automodule:: kubernetes.client.rest
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   kubernetes.client.api_client
+   kubernetes.client.configuration
+   kubernetes.client.exceptions
+   kubernetes.client.rest
 
 Module contents
 ---------------
 
 .. automodule:: kubernetes.client
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

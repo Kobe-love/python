@@ -195,10 +195,13 @@ class DynamicClient(object):
         """
         if not watcher: watcher = watch.Watch()
 
+        # Use field selector to query for named instance so the watch parameter is handled properly.
+        if name:
+            field_selector = f"metadata.name={name}"
+
         for event in watcher.stream(
             resource.get,
             namespace=namespace,
-            name=name,
             field_selector=field_selector,
             label_selector=label_selector,
             resource_version=resource_version,
@@ -279,7 +282,8 @@ class DynamicClient(object):
             files=local_var_files,
             auth_settings=auth_settings,
             _preload_content=False,
-            _return_http_data_only=params.get('_return_http_data_only', True)
+            _return_http_data_only=params.get('_return_http_data_only', True),
+            _request_timeout=params.get('_request_timeout')
         )
         if params.get('async_req'):
             return api_response.get()

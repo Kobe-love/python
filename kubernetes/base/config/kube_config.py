@@ -80,7 +80,7 @@ def _create_temp_file_with_content(content, temp_file_path=None):
 
 def _is_expired(expiry):
     return ((parse_rfc3339(expiry) - EXPIRY_SKEW_PREVENTION_DELAY) <=
-            datetime.datetime.utcnow().replace(tzinfo=UTC))
+            datetime.datetime.now(tz=UTC))
 
 
 class FileOrData(object):
@@ -398,7 +398,7 @@ class KubeConfigLoader(object):
 
         if PY3:
             jwt_attributes = json.loads(
-                base64.b64decode(parts[1] + padding).decode('utf-8')
+                base64.urlsafe_b64decode(parts[1] + padding).decode('utf-8')
             )
         else:
             jwt_attributes = json.loads(
@@ -438,6 +438,9 @@ class KubeConfigLoader(object):
                 fh.write(cert)
 
             config.ssl_ca_cert = ca_cert.name
+
+        elif 'idp-certificate-authority' in provider['config']:
+            config.ssl_ca_cert = provider['config']['idp-certificate-authority']
 
         else:
             config.verify_ssl = False
@@ -484,7 +487,7 @@ class KubeConfigLoader(object):
             return
         try:
             base_path = self._get_base_path(self._cluster.path)
-            status = ExecProvider(self._user['exec'], base_path).run()
+            status = ExecProvider(self._user['exec'], base_path, self._cluster).run()
             if 'token' in status:
                 self.token = "Bearer %s" % status['token']
             elif 'clientCertificateData' in status:
@@ -564,6 +567,8 @@ class KubeConfigLoader(object):
                         temp_file_path=self._temp_file_path).as_file()
         if 'insecure-skip-tls-verify' in self._cluster:
             self.verify_ssl = not self._cluster['insecure-skip-tls-verify']
+        if 'tls-server-name' in self._cluster:
+            self.tls_server_name = self._cluster['tls-server-name']
 
     def _set_config(self, client_configuration):
         if 'token' in self.__dict__:
@@ -572,10 +577,10 @@ class KubeConfigLoader(object):
             def _refresh_api_key(client_configuration):
                 if ('expiry' in self.__dict__ and _is_expired(self.expiry)):
                     self._load_authentication()
-                    self._set_config(client_configuration)
+                self._set_config(client_configuration)
             client_configuration.refresh_api_key_hook = _refresh_api_key
         # copy these keys directly from self to configuration object
-        keys = ['host', 'ssl_ca_cert', 'cert_file', 'key_file', 'verify_ssl']
+        keys = ['host', 'ssl_ca_cert', 'cert_file', 'key_file', 'verify_ssl','tls_server_name']
         for key in keys:
             if key in self.__dict__:
                 setattr(client_configuration, key, getattr(self, key))
@@ -662,7 +667,7 @@ class ConfigNode(object):
 class KubeConfigMerger:
 
     """Reads and merges configuration from one or more kube-config's.
-    The propery `config` can be passed to the KubeConfigLoader as config_dict.
+    The property `config` can be passed to the KubeConfigLoader as config_dict.
 
     It uses a path attribute from ConfigNode to store the path to kubeconfig.
     This path is required to load certs from relative paths.
@@ -722,6 +727,10 @@ class KubeConfigMerger:
             self.config_merged = ConfigNode(path, config_merged, path)
         for item in ('clusters', 'contexts', 'users'):
             self._merge(item, config.get(item, []) or [], path)
+
+        if 'current-context' in config:
+            self.config_merged.value['current-context'] = config['current-context']
+
         self.config_files[path] = config
 
     def _merge(self, item, add_cfg, path):
@@ -789,7 +798,8 @@ def list_kube_config_contexts(config_file=None):
 
 def load_kube_config(config_file=None, context=None,
                      client_configuration=None,
-                     persist_config=True):
+                     persist_config=True,
+                     temp_file_path=None):
     """Loads authentication and cluster information from kube-config file
     and stores them in kubernetes.client.configuration.
 
@@ -800,6 +810,7 @@ def load_kube_config(config_file=None, context=None,
         set configs to.
     :param persist_config: If True, config file will be updated when changed
         (e.g GCP token refresh).
+    :param temp_file_path: store temp files path.
     """
 
     if config_file is None:
@@ -807,7 +818,8 @@ def load_kube_config(config_file=None, context=None,
 
     loader = _get_kube_config_loader(
         filename=config_file, active_context=context,
-        persist_config=persist_config)
+        persist_config=persist_config,
+        temp_file_path=temp_file_path)
 
     if client_configuration is None:
         config = type.__call__(Configuration)
@@ -854,32 +866,36 @@ def load_kube_config_from_dict(config_dict, context=None,
 def new_client_from_config(
         config_file=None,
         context=None,
-        persist_config=True):
+        persist_config=True,
+        client_configuration=None):
     """
     Loads configuration the same as load_kube_config but returns an ApiClient
     to be used with any API object. This will allow the caller to concurrently
     talk with multiple clusters.
     """
-    client_config = type.__call__(Configuration)
+    if client_configuration is None:
+        client_configuration = type.__call__(Configuration)
     load_kube_config(config_file=config_file, context=context,
-                     client_configuration=client_config,
+                     client_configuration=client_configuration,
                      persist_config=persist_config)
-    return ApiClient(configuration=client_config)
+    return ApiClient(configuration=client_configuration)
 
 
 def new_client_from_config_dict(
         config_dict=None,
         context=None,
         persist_config=True,
-        temp_file_path=None):
+        temp_file_path=None,
+        client_configuration=None):
     """
     Loads configuration the same as load_kube_config_from_dict but returns an ApiClient
     to be used with any API object. This will allow the caller to concurrently
     talk with multiple clusters.
     """
-    client_config = type.__call__(Configuration)
+    if client_configuration is None:
+        client_configuration = type.__call__(Configuration)
     load_kube_config_from_dict(config_dict=config_dict, context=context,
-                               client_configuration=client_config,
+                               client_configuration=client_configuration,
                                persist_config=persist_config,
                                temp_file_path=temp_file_path)
-    return ApiClient(configuration=client_config)
+    return ApiClient(configuration=client_configuration)

@@ -91,6 +91,18 @@ supported versions of Kubernetes clusters.
 - [client 19.y.z](https://pypi.org/project/kubernetes/19.15.0/): Kubernetes 1.18 or below (+-), Kubernetes 1.19 (✓), Kubernetes 1.20 or above (+-)
 - [client 20.y.z](https://pypi.org/project/kubernetes/20.13.0/): Kubernetes 1.19 or below (+-), Kubernetes 1.20 (✓), Kubernetes 1.21 or above (+-)
 - [client 21.y.z](https://pypi.org/project/kubernetes/21.7.0/): Kubernetes 1.20 or below (+-), Kubernetes 1.21 (✓), Kubernetes 1.22 or above (+-)
+- [client 22.y.z](https://pypi.org/project/kubernetes/22.6.0/): Kubernetes 1.21 or below (+-), Kubernetes 1.22 (✓), Kubernetes 1.23 or above (+-)
+- [client 23.y.z](https://pypi.org/project/kubernetes/23.6.0/): Kubernetes 1.22 or below (+-), Kubernetes 1.23 (✓), Kubernetes 1.24 or above (+-)
+- [client 24.y.z](https://pypi.org/project/kubernetes/24.2.0/): Kubernetes 1.23 or below (+-), Kubernetes 1.24 (✓), Kubernetes 1.25 or above (+-)
+- [client 25.y.z](https://pypi.org/project/kubernetes/25.3.0/): Kubernetes 1.24 or below (+-), Kubernetes 1.25 (✓), Kubernetes 1.26 or above (+-)
+- [client 26.y.z](https://pypi.org/project/kubernetes/26.1.0/): Kubernetes 1.25 or below (+-), Kubernetes 1.26 (✓), Kubernetes 1.27 or above (+-)
+- [client 27.y.z](https://pypi.org/project/kubernetes/27.2.0/): Kubernetes 1.26 or below (+-), Kubernetes 1.27 (✓), Kubernetes 1.28 or above (+-)
+- [client 28.y.z](https://pypi.org/project/kubernetes/28.1.0/): Kubernetes 1.27 or below (+-), Kubernetes 1.28 (✓), Kubernetes 1.29 or above (+-)
+- [client 29.y.z](https://pypi.org/project/kubernetes/29.0.0/): Kubernetes 1.28 or below (+-), Kubernetes 1.29 (✓), Kubernetes 1.30 or above (+-)
+- [client 30.y.z](https://pypi.org/project/kubernetes/30.1.0/): Kubernetes 1.29 or below (+-), Kubernetes 1.30 (✓), Kubernetes 1.31 or above (+-)
+- [client 31.y.z](https://pypi.org/project/kubernetes/31.0.0/): Kubernetes 1.30 or below (+-), Kubernetes 1.31 (✓), Kubernetes 1.32 or above (+-)
+- [client 32.y.z](https://pypi.org/project/kubernetes/32.0.0b1/): Kubernetes 1.31 or below (+-), Kubernetes 1.32 (✓), Kubernetes 1.33 or above (+-)
+
 
 > See [here](#homogenizing-the-kubernetes-python-client-versions) for an explanation of why there is no v13-v16 release.
 
@@ -128,15 +140,36 @@ between client-python versions.
 | 12.0 Alpha/Beta | Kubernetes main repo, 1.16 branch    | ✗                             |
 | 12.0            | Kubernetes main repo, 1.16 branch    | ✗                             |
 | 17.0 Alpha/Beta | Kubernetes main repo, 1.17 branch    | ✗                             |
-| 17.0            | Kubernetes main repo, 1.17 branch    | ✓                             |
+| 17.0            | Kubernetes main repo, 1.17 branch    | ✗                             |
 | 18.0 Alpha/Beta | Kubernetes main repo, 1.18 branch    | ✗                             |
-| 18.0            | Kubernetes main repo, 1.18 branch    | ✓                             |
+| 18.0            | Kubernetes main repo, 1.18 branch    | ✗                             |
 | 19.0 Alpha/Beta | Kubernetes main repo, 1.19 branch    | ✗                             |
-| 19.0            | Kubernetes main repo, 1.19 branch    | ✓                             |
+| 19.0            | Kubernetes main repo, 1.19 branch    | ✗                             |
 | 20.0 Alpha/Beta | Kubernetes main repo, 1.20 branch    | ✗                             |
-| 20.0            | Kubernetes main repo, 1.20 branch    | ✓                             |
+| 20.0            | Kubernetes main repo, 1.20 branch    | ✗                             |
 | 21.0 Alpha/Beta | Kubernetes main repo, 1.21 branch    | ✗                             |
-| 21.0            | Kubernetes main repo, 1.21 branch    | ✓                             |
+| 21.0            | Kubernetes main repo, 1.21 branch    | ✗                             |
+| 22.0 Alpha/Beta | Kubernetes main repo, 1.22 branch    | ✗                             |
+| 22.0            | Kubernetes main repo, 1.22 branch    | ✗                             |
+| 23.0 Alpha/Beta | Kubernetes main repo, 1.23 branch    | ✗                             |
+| 23.0            | Kubernetes main repo, 1.23 branch    | ✗                             |
+| 24.0 Alpha/Beta | Kubernetes main repo, 1.24 branch    | ✗                             |
+| 24.0            | Kubernetes main repo, 1.24 branch    | ✗                             |
+| 25.0 Alpha/Beta | Kubernetes main repo, 1.25 branch    | ✗                             |
+| 25.0            | Kubernetes main repo, 1.25 branch    | ✗                             |
+| 26.0 Alpha/Beta | Kubernetes main repo, 1.26 branch    | ✗                             |
+| 26.0            | Kubernetes main repo, 1.26 branch    | ✗                             |
+| 27.0 Alpha/Beta | Kubernetes main repo, 1.27 branch    | ✗                             |
+| 27.0            | Kubernetes main repo, 1.27 branch    | ✗                             |
+| 28.0 Alpha/Beta | Kubernetes main repo, 1.28 branch    | ✗                             |
+| 28.0            | Kubernetes main repo, 1.28 branch    | ✗                             |
+| 29.0 Alpha/Beta | Kubernetes main repo, 1.29 branch    | ✗                             |
+| 29.0            | Kubernetes main repo, 1.29 branch    | ✓                             |
+| 30.0 Alpha/Beta | Kubernetes main repo, 1.30 branch    | ✗                             |
+| 30.0            | Kubernetes main repo, 1.30 branch    | ✓                             |
+| 31.0 Alpha/Beta | Kubernetes main repo, 1.31 branch    | ✗                             |
+| 31.0            | Kubernetes main repo, 1.31 branch    | ✓                             |
+| 32.0 Alpha/Beta | Kubernetes main repo, 1.32 branch    | ✓                             |
 
 > See [here](#homogenizing-the-kubernetes-python-client-versions) for an explanation of why there is no v13-v16 release.
 
@@ -201,3 +234,5 @@ This will cause a failure in  non-exec/attach calls. If you reuse your api clien
 recreate it between api calls that use _stream_ and other api calls.
 
 See more at [exec example](examples/pod_exec.py).
+
+**[⬆ back to top](#Installation)**
