@@ -61,7 +61,7 @@
 #   branch
 #
 # Usage:
-#   $ KUBERNETES_BRANCH=release-1.19 CLIENT_VERSION=19.0.0-snapshot DEVELOPMENT_STATUS="3 - Alpha" scripts/release.sh
+#   $ KUBERNETES_BRANCH=release-1.19 CLIENT_VERSION=19.0.0+snapshot DEVELOPMENT_STATUS="3 - Alpha" scripts/release.sh
 
 set -o errexit
 set -o nounset
@@ -93,6 +93,12 @@ source scripts/util/kube_changelog.sh
 KUBERNETES_BRANCH=${KUBERNETES_BRANCH:-$(python3 "scripts/constants.py" KUBERNETES_BRANCH)}
 CLIENT_VERSION=${CLIENT_VERSION:-$(python3 "scripts/constants.py" CLIENT_VERSION)}
 DEVELOPMENT_STATUS=${DEVELOPMENT_STATUS:-$(python3 "scripts/constants.py" DEVELOPMENT_STATUS)}
+
+# Simple check if version is compliant with https://peps.python.org/pep-0440/
+if [[ ! "$CLIENT_VERSION" =~ ^[0-9A-Za-z+.]+$ ]]; then
+    echo "!!! Invalid client version $CLIENT_VERSION"
+    exit 1
+fi
 
 # Create a local branch
 STARTINGBRANCH=$(git symbolic-ref --short HEAD)
@@ -126,7 +132,7 @@ newbranch="$(echo "automated-release-of-${CLIENT_VERSION}-${remote_branch}" | se
 newbranchuniq="${newbranch}-$(date +%s)"
 declare -r newbranchuniq
 echo "+++ Creating local branch ${newbranchuniq}"
-git checkout -b "${newbranchuniq}" "${remote_branch}"
+git checkout -b "${newbranchuniq}" "upstream/master"
 
 # Get Kubernetes API versions
 old_client_version=$(python3 "scripts/constants.py" CLIENT_VERSION)
@@ -137,7 +143,7 @@ echo "New Kubernetes API Version: $new_k8s_api_version"
 
 # If it's an actual release, pull master branch
 if [[ $CLIENT_VERSION != *"snapshot"* ]]; then
-  git pull -X theirs upstream master --no-edit
+  git pull -X theirs upstream release-"${CLIENT_VERSION%%.*}".0 --no-edit
 
   # Collect release notes from master branch
   if [[ $(git log ${remote_branch}..upstream/master | grep ^commit) ]]; then
@@ -202,12 +208,8 @@ git diff-index --quiet --cached HEAD || git commit -am "update changelog"
 # Re-generate the client
 scripts/update-client.sh
 
-# Apply hotfixes
-rm -r kubernetes/test/
-git add .
-git commit -m "temporary generated commit"
-scripts/apply-hotfixes.sh
-git reset HEAD~2
+# Re-generate the asyncio client
+scripts/update-client-asyncio.sh
 
 # Custom object API is hosted in gen repo. Commit custom object API change
 # separately for easier review
@@ -215,9 +217,12 @@ if [[ -n "$(git diff kubernetes/client/api/custom_objects_api.py)" ]]; then
   git add kubernetes/client/api/custom_objects_api.py
   git commit -m "generated client change for custom_objects"
 fi
+
 # Check if there is any API change, then commit
 git add kubernetes/docs kubernetes/client/api/ kubernetes/client/models/ kubernetes/swagger.json.unprocessed scripts/swagger.json
+git add kubernetes/aio/docs kubernetes/aio/client/api/ kubernetes/aio/client/models/ kubernetes/aio/swagger.json.unprocessed
 git diff-index --quiet --cached HEAD || git commit -m "generated API change"
+
 # Commit everything else
 git add .
 git commit -m "generated client change"

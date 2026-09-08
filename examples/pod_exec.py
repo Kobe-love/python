@@ -33,11 +33,11 @@ def exec_commands(api_instance):
                                                 namespace='default')
     except ApiException as e:
         if e.status != 404:
-            print("Unknown error: %s" % e)
+            print(f"Unknown error: {e}")
             exit(1)
 
     if not resp:
-        print("Pod %s does not exist. Creating it..." % name)
+        print(f"Pod {name} does not exist. Creating it...")
         pod_manifest = {
             'apiVersion': 'v1',
             'kind': 'Pod',
@@ -71,6 +71,8 @@ def exec_commands(api_instance):
         '/bin/sh',
         '-c',
         'echo This message goes to stderr; echo This message goes to stdout']
+    # When calling a pod with multiple containers running the target container
+    # has to be specified with a keyword argument container=<name>.
     resp = stream(api_instance.connect_get_namespaced_pod_exec,
                   name,
                   'default',
@@ -96,22 +98,22 @@ def exec_commands(api_instance):
     while resp.is_open():
         resp.update(timeout=1)
         if resp.peek_stdout():
-            print("STDOUT: %s" % resp.read_stdout())
+            print(f"STDOUT: {resp.read_stdout()}")
         if resp.peek_stderr():
-            print("STDERR: %s" % resp.read_stderr())
+            print(f"STDERR: {resp.read_stderr()}")
         if commands:
             c = commands.pop(0)
-            print("Running command... %s\n" % c)
+            print(f"Running command... {c}\n")
             resp.write_stdin(c + "\n")
         else:
             break
 
     resp.write_stdin("date\n")
     sdate = resp.readline_stdout(timeout=3)
-    print("Server date command returns: %s" % sdate)
+    print(f"Server date command returns: {sdate}")
     resp.write_stdin("whoami\n")
     user = resp.readline_stdout(timeout=3)
-    print("Server user is: %s" % user)
+    print(f"Server user is: {user}")
     resp.close()
 
 

@@ -2,8 +2,13 @@
 
 This directory contains various examples of how to use the Python client.
 Please read the description at the top of each example for more information
-about what the script does and any prequisites. Most scripts also include
+about what the script does and any prerequisites. Most scripts also include
 comments throughout the code.
+
+## Available Examples
+
+- pod_logs.py — basic (blocking) pod log streaming example
+- pod_logs_non_blocking.py — non-blocking streaming of pod logs with graceful shutdown
 
 ## Setup
 
@@ -15,3 +20,15 @@ installed following the directions
 
 If you find a problem please file an
 [issue](https://github.com/kubernetes-client/python/issues).
+
+
+---
+
+## Running Examples Locally
+
+### Prerequisites
+
+- Python 3.8 or newer
+- Kubernetes Python client installed:
+  ```bash
+  pip install kubernetes

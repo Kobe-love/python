@@ -1,29 +1,47 @@
 # coding: utf-8
 
 
-import atexit
-import weakref
 import unittest
+from unittest import mock
+import weakref
 
 import kubernetes
+from kubernetes.aio.client.configuration import Configuration as AsyncConfiguration
 from kubernetes.client.configuration import Configuration
+from kubernetes.client.rest import RESTClientObject
 import urllib3
 
-class TestApiClient(unittest.TestCase):
 
+class TestApiClient(unittest.TestCase):
     def test_context_manager_closes_threadpool(self):
         with kubernetes.client.ApiClient() as client:
-            self.assertIsNotNone(client.pool)
-            pool_ref = weakref.ref(client._pool)
-            self.assertIsNotNone(pool_ref())
-        self.assertIsNone(pool_ref())
+            pool = weakref.ref(client.pool)
 
-    def test_atexit_closes_threadpool(self):
-        client = kubernetes.client.ApiClient()
-        self.assertIsNotNone(client.pool)
-        self.assertIsNotNone(client._pool)
-        atexit._run_exitfuncs()
         self.assertIsNone(client._pool)
+        self.assertIsNone(pool())
+
+    @mock.patch('kubernetes.client.api_client.atexit.register')
+    def test_atexit_closes_threadpool(self, register):
+        client = kubernetes.client.ApiClient()
+        client.pool
+
+        register.assert_called_once_with(client.close)
+        register.call_args.args[0]()
+
+        self.assertIsNone(client._pool)
+
+    def test_deserialize_dict_syntax_compatibility(self):
+        client = kubernetes.client.ApiClient()
+
+        for response_type, expected in (
+            ('Dict[str, str]', {'key': 'value'}),
+            ('Dict[str, Dict[str, str]]', {'outer': {'key': 'value'}}),
+        ):
+            with self.subTest(response_type=response_type):
+                self.assertEqual(
+                    client._ApiClient__deserialize(expected, response_type),
+                    expected,
+                )
 
     def test_rest_proxycare(self):
 
@@ -38,7 +56,7 @@ class TestApiClient(unittest.TestCase):
              ( 'http://kube.others.com:1234/','http://proxy.local:8080/',  '*',                            pool['direct']),
         ]:
             # setup input
-            config = Configuration()
+            config = Configuration(proxy='', no_proxy='')
             setattr(config, 'host', dst)
             if proxy is not None:
                 setattr(config, 'proxy', proxy)
@@ -49,3 +67,96 @@ class TestApiClient(unittest.TestCase):
             # test
             client = kubernetes.client.ApiClient(configuration=config)
             self.assertEqual( expected_pool, type(client.rest_client.pool_manager) )
+
+    def test_client_go_read_retries_do_not_override_write_retries(self):
+        config = Configuration(proxy='', no_proxy='', retries=urllib3.Retry(total=2))
+        config.client_go_retries = True
+        rest_client = RESTClientObject(config)
+        rest_client.pool_manager = mock.Mock()
+        rest_client.pool_manager.request.return_value = urllib3.HTTPResponse(
+            body=b'{}', status=200, reason='OK',
+        )
+
+        rest_client.request(
+            'PATCH',
+            'http://example.test/api/v1/namespaces/default/configmaps/sample',
+            headers={'Content-Type': 'application/json'},
+            body={},
+        )
+
+        self.assertNotIn('retries', rest_client.pool_manager.request.call_args.kwargs)
+
+
+class TestConfigurationAuthSettings(unittest.TestCase):
+    """Regression tests for Configuration.auth_settings() bearer-token lookup.
+
+    Prior to v36.0.0 the generated client stored the bearer token under
+    ``api_key['authorization']`` (e.g. set by ``load_kube_config`` or by
+    user code directly). v36.0.0 switched the lookup to
+    ``api_key['BearerToken']`` without a fallback, which silently dropped
+    the Authorization header from every outgoing request and caused 401
+    Unauthorized against any cluster relying on bearer tokens.
+    See: https://github.com/kubernetes-client/python/issues/2595
+    """
+
+    def _bearer_value(self, config):
+        settings = config.auth_settings()
+        self.assertIn('BearerToken', settings)
+        return settings['BearerToken']['value']
+
+    def test_auth_settings_with_bearer_token_key(self):
+        """The new key 'BearerToken' continues to work."""
+        config = Configuration()
+        config.api_key['BearerToken'] = 'Bearer abc123'
+        self.assertEqual(self._bearer_value(config), 'Bearer abc123')
+
+    def test_auth_settings_with_authorization_key(self):
+        """Legacy key 'authorization' is honored as a fallback."""
+        config = Configuration()
+        config.api_key['authorization'] = 'Bearer abc123'
+        self.assertEqual(self._bearer_value(config), 'Bearer abc123')
+
+    def test_auth_settings_bearer_token_takes_precedence(self):
+        """When both keys are set, 'BearerToken' wins."""
+        config = Configuration()
+        config.api_key['BearerToken'] = 'Bearer new'
+        config.api_key['authorization'] = 'Bearer old'
+        self.assertEqual(self._bearer_value(config), 'Bearer new')
+
+    def test_auth_settings_with_no_token(self):
+        """No api_key entry yields an empty auth dict."""
+        config = Configuration()
+        self.assertEqual(config.auth_settings(), {})
+
+    def test_auth_settings_with_authorization_key_and_prefix(self):
+        """Legacy callers that split the token and prefix across
+        api_key['authorization'] and api_key_prefix['authorization'] (rather
+        than embedding "Bearer " in the token itself) must still get the
+        prefix applied. https://github.com/kubernetes-client/python/issues/2592
+        """
+        config = Configuration()
+        config.api_key['authorization'] = 'abc123'
+        config.api_key_prefix['authorization'] = 'Bearer'
+        self.assertEqual(self._bearer_value(config), 'Bearer abc123')
+
+
+class TestAsyncConfigurationAuthSettings(unittest.IsolatedAsyncioTestCase):
+    async def test_auth_settings_with_authorization_key_and_prefix(self):
+        config = AsyncConfiguration()
+        config.api_key['authorization'] = 'abc123'
+        config.api_key_prefix['authorization'] = 'Bearer'
+
+        self.assertEqual(
+            (await config.auth_settings())['BearerToken']['value'],
+            'Bearer abc123',
+        )
+
+    async def test_auth_settings_bearer_token_takes_precedence(self):
+        config = AsyncConfiguration()
+        config.api_key['BearerToken'] = 'Bearer new'
+        config.api_key['authorization'] = 'Bearer old'
+
+        self.assertEqual(
+            (await config.auth_settings())['BearerToken']['value'],
+            'Bearer new',
+        )
